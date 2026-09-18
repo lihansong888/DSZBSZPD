@@ -1,4 +1,4 @@
-name: Sync HUYA Source
+name: Sync SZPD Source
 
 on:
   push:
