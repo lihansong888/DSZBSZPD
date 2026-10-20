@@ -6,7 +6,7 @@ import os
 # ========== 填写源的地址 ==========
 URL_LIST = [
     
-    "https://raw.githubusercontent.com/kakaxi-1/IPTV/refs/heads/main/ipv4.txt"
+    "https://raw.githubusercontent.com/kakaxi-1/IPTV/refs/heads/main/ipv4.txt",
     "https://raw.githubusercontent.com/kakaxi-1/IPTV/refs/heads/main/iptv.txt"
 ]
 
