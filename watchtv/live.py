@@ -2,20 +2,16 @@ import requests
 import re
 import os
 
-
 # ========== 填写源的地址 ==========
 URL_LIST = [
-    
     "https://raw.githubusercontent.com/q1017673817/iptvz/refs/heads/main/zubo_all.txt"
-    
 ]
 
-# ========== 分组映射：左边是源里的分组名，右边是输出时改后的分组名 ==========
-GROUP_MAP = {
-    "数字频道": "HS数字频道",
-    "央视频道": "咪咕央卫",
-    "卫视频道": "咪咕央卫",
-}
+# ========== 关键词列表：包含任意一个就收录 ==========
+KEYWORDS = ["华数", "晴彩"]
+# 输出统一分组名
+OUTPUT_GROUP_NAME = "HS数字频道"
+
 
 def parse_any(text: str):
     res = []
@@ -33,7 +29,7 @@ def parse_any(text: str):
             extinf_line = None
             continue
         if ',' in ln and not ln.startswith("#"):
-            sp = ln.split(',',1)
+            sp = ln.split(',', 1)
             name_part = sp[0].strip()
             url_part = sp[1].strip()
             if url_part == "#genre#":
@@ -46,21 +42,17 @@ def parse_any(text: str):
             res.append((fake_ext, url_part))
     return res
 
+
 def get_channel_name(extinf):
     if "," in extinf:
         return extinf.split(",")[-1].strip()
     return ""
 
-def get_group_title(extinf):
-    m = re.search(r'group-title="([^"]+)"', extinf)
-    if m:
-        return m.group(1).strip()
-    return ""
 
 def main():
-    # 用改后的分组名初始化空列表
-    group_bucket = {v: [] for v in GROUP_MAP.values()}
+    channel_list = []
     seen = set()
+
     for url in URL_LIST:
         try:
             resp = requests.get(url, timeout=15)
@@ -68,35 +60,30 @@ def main():
             channels = parse_any(resp.text)
             for extinf, play_url in channels:
                 ch_name = get_channel_name(extinf)
-                ch_group = get_group_title(extinf)
-                # 只保留 GROUP_MAP 里有的分组，其他全屏蔽
-                if ch_group not in GROUP_MAP:
-                    continue
-                # 关键：查映射表，把源分组名改成输出分组名
-                output_group = GROUP_MAP[ch_group]
-                item_key = (ch_name, play_url)
-                if item_key not in seen:
-                    seen.add(item_key)
-                    group_bucket[output_group].append((ch_name, play_url))
+                # 只要包含任意一个关键词就收录
+                if any(k in ch_name for k in KEYWORDS):
+                    item_key = (ch_name, play_url)
+                    if item_key not in seen:
+                        seen.add(item_key)
+                        channel_list.append((ch_name, play_url))
         except Exception as e:
             print(f"⚠️ 拉取 {url} 失败：{e}")
-    total_cnt = sum(len(v) for v in group_bucket.values())
-    print(f"✅筛选结束，共提取 {total_cnt} 个频道")
-    for gname, ch_list in group_bucket.items():
-        print(f"  - {gname}: {len(ch_list)} 个频道")
+
+    total_cnt = len(channel_list)
+    print(f"✅筛选结束，共提取 {total_cnt} 个【华数/晴彩】频道")
+
+    output_m3u = ["#EXTM3U"]
+    for cname, curl in channel_list:
+        fake_ext = f'#EXTINF:-1 group-title="{OUTPUT_GROUP_NAME}",{cname}'
+        output_m3u.append(fake_ext)
+        output_m3u.append(curl)
 
     out_dir = os.path.dirname(os.path.abspath(__file__))
-    output_m3u = ["#EXTM3U"]
-    for gname, ch_list in group_bucket.items():
-        for cname, curl in ch_list:
-            # 输出时用改后的分组名
-            fake_ext = f'#EXTINF:-1 group-title="{gname}",{cname}'
-            output_m3u.append(fake_ext)
-            output_m3u.append(curl)
     m3u8_path = os.path.join(out_dir, "live.m3u8")
     with open(m3u8_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(output_m3u))
+        f.write("\n".join(output_m3u8))
     print(f"✅已输出 m3u8：{m3u8_path}")
+
 
 if __name__ == "__main__":
     main()
