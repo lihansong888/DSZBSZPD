@@ -10,7 +10,7 @@ URL_LIST = [
 # ========== 关键词列表：包含任意一个就收录 ==========
 KEYWORDS = ["华数", "晴彩"]
 # 输出统一分组名
-OUTPUT_GROUP_NAME = "HS数字频道"
+OUTPUT_GROUP_NAME = "华数&晴彩频道"
 
 
 def parse_any(text: str):
@@ -81,7 +81,8 @@ def main():
     out_dir = os.path.dirname(os.path.abspath(__file__))
     m3u8_path = os.path.join(out_dir, "live.m3u8")
     with open(m3u8_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(output_m3u8))
+        f.write("\n".join(output_m3u))  # ✅这里修正了，原来是 output_m3u8
+
     print(f"✅已输出 m3u8：{m3u8_path}")
 
 
