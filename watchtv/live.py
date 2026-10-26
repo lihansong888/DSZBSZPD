@@ -10,7 +10,7 @@ URL_LIST = [
 # ========== 关键词列表：包含任意一个就收录 ==========
 KEYWORDS = ["华数", "晴彩"]
 # 输出统一分组名
-OUTPUT_GROUP_NAME = "华数&晴彩频道"
+OUTPUT_GROUP_NAME = "HS数字频道"
 
 
 def parse_any(text: str):
